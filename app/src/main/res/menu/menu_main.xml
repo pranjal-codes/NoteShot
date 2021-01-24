@@ -1,0 +1,30 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.noteshot.MainActivity">
+
+    <item
+        android:id="@+id/search_folders"
+        android:icon="@drawable/ic_baseline_search_24"
+        android:title="Search"
+        app:actionViewClass="android.widget.SearchView"
+        app:showAsAction="always|withText"/>
+    <item
+        android:id="@+id/sort_folders"
+        android:icon="@drawable/ic_baseline_sort_24"
+        android:title="Sort"
+        app:showAsAction="ifRoom">
+        <menu>
+            <item
+                android:id="@+id/sort_folders_by_name"
+                android:title="Order by name"
+                app:showAsAction="never"/>
+            <item
+                android:id="@+id/sort_folders_by_last_modified"
+                android:title="Order by last modified"
+                app:showAsAction="never"/>
+        </menu>
+    </item>
+
+
+</menu>
