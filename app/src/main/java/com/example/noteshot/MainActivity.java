@@ -32,10 +32,10 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     TextView noDataFoundTextView;
-    static List<FolderModel> folderName;
+    List<FolderModel> folderName;
     RecyclerView folderRecyclerView;
     FolderAdapter folderRecyclerViewAdapter;
-    static GridLayoutManager gridLayoutManager;
+    GridLayoutManager gridLayoutManager;
     static FloatingActionButton fab;
     File parentFolder;
     File[] files;
@@ -56,14 +56,10 @@ public class MainActivity extends AppCompatActivity {
         folderParentPath = MainActivity.this.getFilesDir();
         parentFolder = new File(String.valueOf(MainActivity.this.getFilesDir()));
 
-//        Setting the toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-//        Fetching existing Note's folders from the device
         fetchExistingData();
-
-//        Setting the recycler view for the fetched folders
         setRecyclerView();
 
 //        Create Folder Dialog Appears by Clicking the Fab Button
@@ -72,22 +68,22 @@ public class MainActivity extends AppCompatActivity {
             gridLayoutManager.scrollToPositionWithOffset(0, 0);
         });
 
-//        hides FAB button on scroll
         hideFabOnScroll();
+
     }
 
 
     public void setRecyclerView() {
-        folderRecyclerViewAdapter = new FolderAdapter(MainActivity.this, noDataFoundTextView, folderParentPath);
+        folderRecyclerViewAdapter = new FolderAdapter(MainActivity.this, folderName, noDataFoundTextView, folderParentPath);
         folderRecyclerView.setAdapter(folderRecyclerViewAdapter);
 
-//        It finds the appropriate no. of columns for the recycler View
         int columns = getColumns();
         gridLayoutManager = new GridLayoutManager(MainActivity.this, columns + 1, RecyclerView.VERTICAL, false);
         folderRecyclerView.setLayoutManager(gridLayoutManager);
     }
 
     public int getColumns() {
+//        It finds the appropriate no. of columns for the recycler View
         Display display = MainActivity.this.getWindowManager().getDefaultDisplay();
         DisplayMetrics outMetrics = new DisplayMetrics();
         display.getMetrics(outMetrics);
@@ -96,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
         return Math.round(dpWidth / 300);
     }
 
-    private void fetchExistingData() {
+    public void fetchExistingData() {
 
         folderName = new ArrayList<>();
         files = parentFolder.listFiles();
@@ -107,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        sortByName();
+        Collections.sort(folderName, (o1, o2) -> o1.getFolderName().compareToIgnoreCase(o2.getFolderName()));
     }
 
     private void hideFabOnScroll() {
@@ -130,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
 //        My custom alert Dialog , nothing to worry about this
         CustomAlertDialogue alertDialogue = new CustomAlertDialogue(this);
         AlertDialog alertToShow = alertDialogue.getFolderCreateAlert();
-        EditText input = alertDialogue.getFolderCreateEditText();
+        EditText input = alertDialogue.getAlertEditText();
 
         alertToShow.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
 
@@ -147,6 +143,7 @@ public class MainActivity extends AppCompatActivity {
                         sortByLastModified();
                     }
                     folderRecyclerViewAdapter.notifyDataSetChanged();
+                    setRecyclerView();
                     Toast.makeText(MainActivity.this, "New Folder Created", Toast.LENGTH_SHORT).show();
                 }
             } else {
@@ -161,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+//         Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         MenuItem menuItem = menu.findItem(R.id.search_folders);
         folderSearchView = (SearchView) menuItem.getActionView();
@@ -182,25 +179,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        folderSearchView.setOnCloseListener(new SearchView.OnCloseListener() {
-            @Override
-            public boolean onClose() {
-                fab.show();
-                InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputMethodManager.hideSoftInputFromWindow(folderSearchView.getWindowToken(), 0);
-                folderSearchView.onActionViewCollapsed();
-                folderRecyclerViewAdapter.notifyDataSetChanged();
-                setRecyclerView();
-                return true;
-            }
+        folderSearchView.setOnCloseListener(() -> {
+            fab.show();
+            InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(folderSearchView.getWindowToken(), 0);
+//            setRecyclerView();
+            folderRecyclerViewAdapter.notifyDataSetChanged();
+            folderSearchView.onActionViewCollapsed();
+            return true;
         });
-        folderSearchView.setOnSearchClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                folderRecyclerViewAdapter.notifyDataSetChanged();
-                setRecyclerView();
-                fab.hide();
-            }
+        folderSearchView.setOnSearchClickListener(v -> {
+//            setRecyclerView();
+            folderRecyclerViewAdapter.notifyDataSetChanged();
+            fab.hide();
         });
 
 
@@ -216,29 +207,27 @@ public class MainActivity extends AppCompatActivity {
         switch (id) {
             case (int) R.id.sort_folders_by_last_modified:
                 sortByLastModified();
-                folderRecyclerViewAdapter.notifyDataSetChanged();
-                gridLayoutManager.scrollToPositionWithOffset(0, 0);
-                fab.show();
                 break;
             case (int) R.id.sort_folders_by_name:
                 sortByName();
-                folderRecyclerViewAdapter.notifyDataSetChanged();
-                gridLayoutManager.scrollToPositionWithOffset(0, 0);
-                fab.show();
                 break;
         }
 
+        folderRecyclerViewAdapter.notifyDataSetChanged();
+        fab.show();
         return super.onOptionsItemSelected(item);
     }
 
     private void sortByLastModified() {
         Collections.sort(folderName, (o1, o2) -> o2.getTimestamp().compareToIgnoreCase(o1.getTimestamp()));
+        gridLayoutManager.scrollToPositionWithOffset(0, 0);
         isSortByName = false;
     }
 
     private void sortByName() {
         Collections.sort(folderName, (o1, o2) -> o1.getFolderName().compareToIgnoreCase(o2.getFolderName()));
-        isSortByName = false;
+        gridLayoutManager.scrollToPositionWithOffset(0, 0);
+        isSortByName = true;
     }
 
     @Override
@@ -251,5 +240,6 @@ public class MainActivity extends AppCompatActivity {
             super.onBackPressed();
         }
     }
+
 
 }

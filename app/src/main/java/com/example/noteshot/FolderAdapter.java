@@ -2,6 +2,7 @@ package com.example.noteshot;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.graphics.Color;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -10,6 +11,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
@@ -30,10 +33,10 @@ import java.util.List;
 public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder> implements Filterable {
 
 
-    private final List<FolderModel> mFolderNames = MainActivity.folderName;
-    List<FolderModel> wholeSearchList = new ArrayList<>(MainActivity.folderName);
-    List<FolderModel> currentSearchListItems = MainActivity.folderName;
-    List<FolderModel> selectedListItems = new ArrayList<>();
+    List<FolderModel> mFolderNames;
+    List<FolderModel> wholeSearchList;
+    List<FolderModel> currentSearchListItems;
+    List<FolderModel> selectedListItems;
     Activity activity;
     TextView noDataFoundTextView;
     MainViewModel mainViewModel;
@@ -42,11 +45,14 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
     File folderParentPath;
     Menu menuBar;
 
-    // Pass in the contact array into the constructor
-    public FolderAdapter(Activity activity, TextView noDataFoundTextView, File folderParentPath) {
+    public FolderAdapter(Activity activity, List<FolderModel> folderName, TextView noDataFoundTextView, File folderParentPath) {
         this.activity = activity;
         this.noDataFoundTextView = noDataFoundTextView;
         this.folderParentPath = folderParentPath;
+        mFolderNames = folderName;
+        wholeSearchList = new ArrayList<>(folderName);
+        currentSearchListItems = folderName;
+        selectedListItems = new ArrayList<>();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -95,6 +101,7 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
                     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                         MenuInflater menuInflater = mode.getMenuInflater();
                         menuInflater.inflate(R.menu.menu_context, menu);
+                        MainActivity.folderSearchView.clearFocus();
                         menuBar = menu;
                         return true;
                     }
@@ -117,24 +124,11 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
                                 break;
 
                             case (int) R.id.select_all:
-                                if (selectedListItems.size() == mFolderNames.size()) {
-                                    isSelectAll = false;
-                                    hideHighlight(holder);
-                                    selectedListItems.clear();
-                                } else {
-                                    isSelectAll = true;
-                                    selectedListItems.clear();
-                                    selectedListItems.addAll(mFolderNames);
-                                    showHighlight(holder);
-                                    notifyDataSetChanged();
-                                }
-                                checkSelectList();
-                                mainViewModel.setText(String.valueOf(selectedListItems.size()));
-                                notifyDataSetChanged();
+                                selectAll(holder);
                                 break;
 
                             case (int) R.id.rename_folder:
-//                                to be implemented soon
+                                renameFolder(mode);
                                 break;
 
                         }
@@ -148,13 +142,15 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
                     public void onDestroyActionMode(ActionMode mode) {
                         isSelectAll = false;
                         multiSelect = false;
+                        mFolderNames.clear();
+                        mFolderNames.addAll(wholeSearchList);
                         hideHighlight(holder);
                         selectedListItems.clear();
                         MainActivity.fab.show();
                         notifyDataSetChanged();
+                        MainActivity.folderSearchView.onActionViewCollapsed();
                     }
                 };
-
                 ((AppCompatActivity) v.getContext()).startActionMode(callback);
             } else {
                 clickItem(holder);
@@ -164,6 +160,7 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         });
         holder.itemView.setOnClickListener(v -> {
             if (multiSelect) {
+
                 clickItem(holder);
             } else {
                 Toast.makeText(activity
@@ -179,7 +176,23 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
             hideHighlight(holder);
         }
 
+    }
 
+    private void selectAll(ViewHolder holder) {
+        if (selectedListItems.size() == mFolderNames.size()) {
+            isSelectAll = false;
+            hideHighlight(holder);
+            selectedListItems.clear();
+        } else {
+            isSelectAll = true;
+            selectedListItems.clear();
+            selectedListItems.addAll(mFolderNames);
+            showHighlight(holder);
+            notifyDataSetChanged();
+        }
+        checkSelectList();
+        mainViewModel.setText(String.valueOf(selectedListItems.size()));
+        notifyDataSetChanged();
     }
 
     //  Show/Hide Highlight on background of items on long click and selection
@@ -217,19 +230,27 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
                     if (folder.delete()) {
                         Toast.makeText(activity, "Folder deleted", Toast.LENGTH_SHORT).show();
                     }
-                    mFolderNames.remove(s);
+                    wholeSearchList.remove(s);
                 }
             }
             selectedListItems.clear();
+            mFolderNames.clear();
+            mFolderNames.addAll(wholeSearchList);
+            currentSearchListItems.clear();
+            currentSearchListItems.addAll(wholeSearchList);
+            notifyDataSetChanged();
 
             hideHighlight(holder);
             if (mFolderNames.size() == 0) {
                 noDataFoundTextView.setVisibility(View.VISIBLE);
             }
-            notifyDataSetChanged();
             //collapsing the searchBar after delete
-            MainActivity.folderSearchView.onActionViewCollapsed();
+//            MainActivity.folderSearchView.onActionViewCollapsed();
             mode.finish();
+        });
+        alertToShow.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
+            mode.finish();
+            alertToShow.dismiss();
         });
     }
 
@@ -264,6 +285,8 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
             menuBar.findItem(R.id.delete_folder).setEnabled(true);
             menuBar.findItem(R.id.delete_folder).setIcon(R.drawable.ic_baseline_delete_24);
         }
+        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(MainActivity.folderSearchView.getWindowToken(), 0);
     }
 
     @Override
@@ -310,4 +333,44 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         }
     };
 
+    private void renameFolder(ActionMode mode) {
+        CustomAlertDialogue alertDialogue = new CustomAlertDialogue(activity);
+        AlertDialog alertToShow = alertDialogue.getFolderRenameAlert(selectedListItems);
+        EditText input = alertDialogue.getAlertEditText();
+
+        alertToShow.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String value = input.getText().toString();
+            FolderModel toDelete = selectedListItems.get(0);
+            String prevFolderName = selectedListItems.get(0).getFolderName();
+            File prevFolder = new File(activity.getFilesDir(), prevFolderName);
+            File renamedFolder = new File(activity.getFilesDir(), value);
+            if (value.length() == 0) {
+                Toast.makeText(activity, "Folder name cannot be empty", Toast.LENGTH_SHORT).show();
+            } else if (renamedFolder.exists()) {
+                Toast.makeText(activity, "Folder with that name already exists", Toast.LENGTH_SHORT).show();
+            } else {
+                prevFolder.renameTo(renamedFolder);
+                wholeSearchList.remove(toDelete);
+                wholeSearchList.add(new FolderModel(renamedFolder.getName(), renamedFolder.lastModified()));
+                currentSearchListItems.clear();
+                currentSearchListItems.addAll(wholeSearchList);
+                mFolderNames.clear();
+                mFolderNames.addAll(wholeSearchList);
+                notifyDataSetChanged();
+                alertToShow.dismiss();
+                mode.finish();
+            }
+        });
+        alertToShow.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
+            mode.finish();
+            alertToShow.dismiss();
+        });
+
+    }
+
+
 }
+
+
+
+

@@ -49,6 +49,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center"
             android:ellipsize="end"
+            android:gravity="center"
             android:maxLines="2"
             android:padding="5dp"
             android:text="Data Structures"
