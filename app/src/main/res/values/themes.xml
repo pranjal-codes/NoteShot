@@ -28,6 +28,15 @@
 
     <style name="Theme.NoteShot.PopupOverlay" parent="@style/Theme.MaterialComponents.DayNight" />
 
+    <style name="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.MaterialComponents.DayNight.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.MaterialComponents.DayNight.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
     <!--    <style name="MyDarkToolbarStyle" parent="@style/Theme.MaterialComponents.DayNight">-->
     <!--        <item name="android:textColor">@color/white</item>-->
     <!--    </style>-->

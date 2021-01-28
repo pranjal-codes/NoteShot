@@ -14,4 +14,6 @@
     <string name="title_activity_searchable">SearchableActivity</string>
     <string name="no_data_found">No Data Found</string>
     <string name="new_folder">New Folder</string>
+    <string name="title_activity_image">ImageActivity</string>
+    <string name="add_image">Add image</string>
 </resources>

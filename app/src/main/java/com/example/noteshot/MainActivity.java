@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,15 +32,14 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView noDataFoundTextView;
+    TextView noDataTextView;
     List<FolderModel> folderName;
     RecyclerView folderRecyclerView;
     FolderAdapter folderRecyclerViewAdapter;
     GridLayoutManager gridLayoutManager;
     static FloatingActionButton fab;
-    File parentFolder;
     File[] files;
-    File folderParentPath;
+    static File folderParentPath;
     boolean isSortByName = false;
     static SearchView folderSearchView;
 
@@ -48,14 +48,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 //        Initializations for views and buttons
-        noDataFoundTextView = findViewById(R.id.empty_recyclerView_message);
+        noDataTextView = findViewById(R.id.empty_recyclerView_message);
         fab = findViewById(R.id.fab);
-        folderRecyclerView = (RecyclerView) findViewById(R.id.folder_recyclerview);
-        folderParentPath = MainActivity.this.getFilesDir();
-        parentFolder = new File(String.valueOf(MainActivity.this.getFilesDir()));
-
+        folderRecyclerView = findViewById(R.id.folder_recyclerview);
+        folderParentPath = this.getExternalFilesDir(null);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -74,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void setRecyclerView() {
-        folderRecyclerViewAdapter = new FolderAdapter(MainActivity.this, folderName, noDataFoundTextView, folderParentPath);
+        folderRecyclerViewAdapter = new FolderAdapter(MainActivity.this, folderName, noDataTextView, folderParentPath);
         folderRecyclerView.setAdapter(folderRecyclerViewAdapter);
 
         int columns = getColumns();
@@ -95,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
     public void fetchExistingData() {
 
         folderName = new ArrayList<>();
-        files = parentFolder.listFiles();
+        files = folderParentPath.listFiles();
         if (files != null) {
             for (File inFile : files) {
                 if (inFile.isDirectory()) {
@@ -132,25 +129,33 @@ public class MainActivity extends AppCompatActivity {
 
 //            Getting the name of the folder to be created
             String value = input.getText().toString();
-            File dir = new File(MainActivity.this.getFilesDir(), value.trim());
-            if (!dir.exists()) {
-                if (dir.mkdir()) {
-                    alertToShow.dismiss();
-                    folderName.add(new FolderModel(dir.getName(), dir.lastModified()));
-                    if (isSortByName) {
-                        sortByName();
-                    } else {
-                        sortByLastModified();
-                    }
-                    folderRecyclerViewAdapter.notifyDataSetChanged();
-                    setRecyclerView();
-                    Toast.makeText(MainActivity.this, "New Folder Created", Toast.LENGTH_SHORT).show();
-                }
+            if (value.contains("\\") || value.contains(":") || value.contains("*") || value.contains("\"") ||
+                    value.contains("<") || value.contains(">") || value.contains("|") || value.contains("/") || value.contains("?")) {
+
+                Toast.makeText(MainActivity.this, "File name contains illegal characters.\n(\\:*?\"<>|/)", Toast.LENGTH_SHORT).show();
+
             } else {
-                if (value.length() == 0) {
-                    Toast.makeText(MainActivity.this, "Folder name cannot be empty", Toast.LENGTH_SHORT).show();
+                File dir = new File(MainActivity.this.getExternalFilesDir(null), value.trim());
+                if (!dir.exists()) {
+                    if (dir.mkdir()) {
+                        alertToShow.dismiss();
+                        folderName.add(new FolderModel(dir.getName(), dir.lastModified()));
+                        if (isSortByName) {
+                            sortByName();
+                        } else {
+                            sortByLastModified();
+                        }
+                        folderRecyclerViewAdapter.notifyDataSetChanged();
+                        setRecyclerView();
+                        Toast.makeText(MainActivity.this, "New Folder Created", Toast.LENGTH_SHORT).show();
+                        Log.i("PATH", dir.getPath());
+                    }
                 } else {
-                    Toast.makeText(MainActivity.this, "Folder with that name already exists", Toast.LENGTH_SHORT).show();
+                    if (value.length() == 0) {
+                        Toast.makeText(MainActivity.this, "Folder name cannot be empty", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Folder with that name already exists", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });
@@ -183,13 +188,11 @@ public class MainActivity extends AppCompatActivity {
             fab.show();
             InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             inputMethodManager.hideSoftInputFromWindow(folderSearchView.getWindowToken(), 0);
-//            setRecyclerView();
             folderRecyclerViewAdapter.notifyDataSetChanged();
             folderSearchView.onActionViewCollapsed();
             return true;
         });
         folderSearchView.setOnSearchClickListener(v -> {
-//            setRecyclerView();
             folderRecyclerViewAdapter.notifyDataSetChanged();
             fab.hide();
         });
@@ -200,9 +203,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         switch (id) {
             case (int) R.id.sort_folders_by_last_modified:
@@ -240,6 +240,5 @@ public class MainActivity extends AppCompatActivity {
             super.onBackPressed();
         }
     }
-
 
 }

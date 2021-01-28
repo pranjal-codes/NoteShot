@@ -3,7 +3,9 @@ package com.example.noteshot;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -38,16 +40,16 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
     List<FolderModel> currentSearchListItems;
     List<FolderModel> selectedListItems;
     Activity activity;
-    TextView noDataFoundTextView;
+    TextView noDataTextView;
     MainViewModel mainViewModel;
     boolean multiSelect = false;
     boolean isSelectAll = false;
     File folderParentPath;
     Menu menuBar;
 
-    public FolderAdapter(Activity activity, List<FolderModel> folderName, TextView noDataFoundTextView, File folderParentPath) {
+    public FolderAdapter(Activity activity, List<FolderModel> folderName, TextView noDataTextView, File folderParentPath) {
         this.activity = activity;
-        this.noDataFoundTextView = noDataFoundTextView;
+        this.noDataTextView = noDataTextView;
         this.folderParentPath = folderParentPath;
         mFolderNames = folderName;
         wholeSearchList = new ArrayList<>(folderName);
@@ -133,7 +135,7 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
 
                         }
                         if (mFolderNames.size() == 0) {
-                            noDataFoundTextView.setVisibility(View.VISIBLE);
+                            noDataTextView.setVisibility(View.VISIBLE);
                         }
                         return true;
                     }
@@ -163,9 +165,11 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
 
                 clickItem(holder);
             } else {
-                Toast.makeText(activity
-                        , mFolderNames.get(holder.getAdapterPosition()).getFolderName()
-                        , Toast.LENGTH_SHORT).show();
+
+
+                Intent intent = new Intent(activity, ImageActivity.class);
+                intent.putExtra("title", holder.textView.getText());
+                activity.startActivity(intent);
             }
         });
 
@@ -242,7 +246,7 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
 
             hideHighlight(holder);
             if (mFolderNames.size() == 0) {
-                noDataFoundTextView.setVisibility(View.VISIBLE);
+                noDataTextView.setVisibility(View.VISIBLE);
             }
             //collapsing the searchBar after delete
 //            MainActivity.folderSearchView.onActionViewCollapsed();
@@ -292,9 +296,9 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
     @Override
     public int getItemCount() {
         if (mFolderNames.size() == 0) {
-            noDataFoundTextView.setVisibility(View.VISIBLE);
+            noDataTextView.setVisibility(View.VISIBLE);
         } else
-            noDataFoundTextView.setVisibility(View.GONE);
+            noDataTextView.setVisibility(View.GONE);
         return mFolderNames.size();
     }
 
@@ -342,8 +346,8 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
             String value = input.getText().toString();
             FolderModel toDelete = selectedListItems.get(0);
             String prevFolderName = selectedListItems.get(0).getFolderName();
-            File prevFolder = new File(activity.getFilesDir(), prevFolderName);
-            File renamedFolder = new File(activity.getFilesDir(), value);
+            File prevFolder = new File(activity.getExternalFilesDir(null), prevFolderName);
+            File renamedFolder = new File(activity.getExternalFilesDir(null), value);
             if (value.length() == 0) {
                 Toast.makeText(activity, "Folder name cannot be empty", Toast.LENGTH_SHORT).show();
             } else if (renamedFolder.exists()) {
