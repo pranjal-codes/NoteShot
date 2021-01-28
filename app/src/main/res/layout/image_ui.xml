@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ImageActivity"
+    android:longClickable="true"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/selectableItemBackground"
+        android:focusable="true"
+        android:orientation="horizontal">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/image_thumbnail"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:layout_marginLeft="20dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginBottom="15dp"
+                android:background="@drawable/ic_folder"
+                android:contentDescription="IMG" />
+
+            <ImageView
+                android:id="@+id/checked_image"
+                android:layout_width="41dp"
+                android:layout_height="41dp"
+                android:layout_marginLeft="19dp"
+                android:layout_marginTop="14dp"
+                android:elevation="5dp"
+                android:src="@drawable/ic_check"
+                android:visibility="gone" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingLeft="20dp">
+
+            <TextView
+                android:id="@+id/image_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:layout_marginBottom="5dp"
+                android:text="IMG_12233212_122312.jpg"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/image_data"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:text="12/3/2021, 20:20"
+                android:textColor="#969696"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

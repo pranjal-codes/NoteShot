@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ImageActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar_image_ui"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary"></androidx.appcompat.widget.Toolbar>
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/image_recyclerview"
+        android:layout_width="match_parent"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/no_image_recyclerView_message"
+        android:text="@string/no_data_found"
+        android:textSize="16sp"
+        android:textColor="#9AFFFFFF"
+        android:gravity="center"
+        android:visibility="gone" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_take_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/fab_margin"
+        app:borderWidth="0dp"
+        app:tint="@null"
+        android:backgroundTint="@color/fabPrimary"
+        app:srcCompat="@drawable/ic_baseline_add_a_photo_24"
+        app:rippleColor="?attr/colorControlHighlight"
+        android:contentDescription="@string/add_image" />
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

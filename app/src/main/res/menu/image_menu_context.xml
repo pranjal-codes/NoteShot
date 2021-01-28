@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/delete_image"
+        android:icon="@drawable/ic_baseline_delete_24"
+        app:showAsAction="ifRoom"
+        android:title="Delete" />
+
+    <item
+        android:id="@+id/select_all_image"
+        android:icon="@drawable/ic_baseline_select_all_24"
+        app:showAsAction="ifRoom"
+        android:title="Select All" />
+
+    <item
+        android:id="@+id/rename_image"
+        android:icon="@drawable/ic_baseline_create_24"
+        app:showAsAction="ifRoom"
+        android:title="Rename" />
+
+
+</menu>
