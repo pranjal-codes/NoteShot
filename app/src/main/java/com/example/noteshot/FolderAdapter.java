@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.net.Uri;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;

@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
-import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -178,8 +177,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
             if (multiSelect) {
                 clickItem(holder);
             } else {
-
-                Toast.makeText(activity, "WILL IMPLEMENT SOON", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent();
                 intent.setAction(Intent.ACTION_VIEW);
                 intent.setDataAndType(Uri.parse("file://" + imageModel.getImageUri()), "image/*");
