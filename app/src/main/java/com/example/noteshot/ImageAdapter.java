@@ -236,7 +236,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
             selectedListItems.addAll(tempDelete);
             for (ImageModel s : selectedListItems) {
 
-                File image = new File(folderParentPath.getPath() + "/" + s.getImageName());
+                File image = new File(s.getImageUri());
                 if (image.exists()) {
                     if (image.delete()) {
                         Toast.makeText(activity, "Image deleted", Toast.LENGTH_SHORT).show();

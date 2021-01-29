@@ -5,12 +5,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,7 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -58,6 +56,8 @@ public class ImageActivity extends AppCompatActivity {
     File[] files;
     static File imagePath;
     static SearchView imageSearchView;
+    File photoFile = null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,18 +92,26 @@ public class ImageActivity extends AppCompatActivity {
     }
 
     private void takePhoto() {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(intent, CAMERA_REQUEST_CODE);
-        linearLayoutManager.scrollToPositionWithOffset(0, 0);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == CAMERA_PERMISSION_CODE) {
-            if (permissions.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                takePhoto();
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            Timestamp timestamp;
+            DateFormat fileNameFormat;
+            photoFile = null;
+            Date date = new Date();
+            timestamp = new Timestamp(date.getTime());
+            fileNameFormat = new SimpleDateFormat("ddMMyyyy_HHmmss");
+            String fileName = "IMG_" + fileNameFormat.format(timestamp);
+            try {
+                photoFile = File.createTempFile(fileName, ".jpg", imagePath);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+            if (photoFile != null) {
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE);
+            }
+            linearLayoutManager.scrollToPositionWithOffset(0, 0);
         }
     }
 
@@ -112,23 +120,24 @@ public class ImageActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == CAMERA_REQUEST_CODE) {
-                Date date = new Date();
-                Timestamp ts = new Timestamp(date.getTime());
-                SimpleDateFormat fileNameFormat = new SimpleDateFormat("ddMMyyyy_HHmmss");
-                String fileName = "IMG_" + fileNameFormat.format(ts) + ".jpg";
-                Bitmap bitmap = (Bitmap) data.getExtras().get("data");
-                File file = new File(imagePath.getPath(), fileName);
-                try {
-                    FileOutputStream out = new FileOutputStream(file);
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-                    out.flush();
-                    out.close();
-                    imageList.add(0, new ImageModel(file.getPath(), ts));
-                    imageRecyclerViewAdapter.notifyDataSetChanged();
-                    takePhoto();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                long ts = photoFile.lastModified();
+                Timestamp tsp = new Timestamp(ts);
+                imageList.add(0, new ImageModel(photoFile.getPath(), tsp));
+                imageRecyclerViewAdapter.notifyDataSetChanged();
+                takePhoto();
+            }
+        } else {
+            photoFile.delete();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_PERMISSION_CODE) {
+            if (permissions.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                takePhoto();
             }
         }
     }
@@ -141,7 +150,7 @@ public class ImageActivity extends AppCompatActivity {
                 DateFormat formatter = new SimpleDateFormat("ddMMyyyyHHmmss");
                 // you can change format of date
                 String name = inFile.getName();
-                String timeString = name.replaceAll("[^0-9]", "");
+                String timeString = name.replaceAll("[^0-9]", "").substring(0, 14);
                 Date date = null;
                 try {
                     date = formatter.parse(timeString);
@@ -239,11 +248,10 @@ public class ImageActivity extends AppCompatActivity {
     }
 
     private void onUpButtonPressed() {
-        Log.i("ARRAY ON SEARCH", imageList.toString());
         if (!imageSearchView.isIconified()) {
             fab.show();
-            setRecyclerView();
             imageRecyclerViewAdapter.notifyDataSetChanged();
+            setRecyclerView();
             imageSearchView.onActionViewCollapsed();
         } else {
             finish();
@@ -255,8 +263,8 @@ public class ImageActivity extends AppCompatActivity {
     public void onBackPressed() {
         if (!imageSearchView.isIconified()) {
             fab.show();
-            setRecyclerView();
             imageRecyclerViewAdapter.notifyDataSetChanged();
+            setRecyclerView();
             imageSearchView.onActionViewCollapsed();
         } else {
             super.onBackPressed();
