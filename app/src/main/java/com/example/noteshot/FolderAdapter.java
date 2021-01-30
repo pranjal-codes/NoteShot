@@ -33,7 +33,7 @@ import java.util.List;
 
 public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder> implements Filterable {
 
-
+    //Data fields
     List<FolderModel> mFolderNames;
     List<FolderModel> wholeSearchList;
     List<FolderModel> currentSearchListItems;
@@ -46,7 +46,15 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
     File folderParentPath;
     Menu menuBar;
 
+    /**
+     * @param activity         context of ImageActivity
+     * @param folderName       List of folders
+     * @param noDataTextView   referring to xml file (shown on empty view)
+     * @param folderParentPath path of parent directory
+     */
     public FolderAdapter(Activity activity, List<FolderModel> folderName, TextView noDataTextView, File folderParentPath) {
+
+        // Initializations
         this.activity = activity;
         this.noDataTextView = noDataTextView;
         this.folderParentPath = folderParentPath;
@@ -83,12 +91,11 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         FolderModel folderModel = mFolderNames.get(position);
         TextView textView = holder.textView;
-        textView.setText(folderModel.getFolderName());
-
         ImageView imageView = holder.imageView;
-        imageView.setImageResource(R.drawable.ic_folder);
-
         ImageView checkedItem = holder.checkedItem;
+
+        textView.setText(folderModel.getFolderName());
+        imageView.setImageResource(R.drawable.ic_folder);
         checkedItem.setImageResource(R.drawable.ic_check);
 
 
@@ -96,7 +103,6 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
             if (!multiSelect) {
                 MainActivity.fab.hide();
                 ActionMode.Callback callback = new ActionMode.Callback() {
-
 
                     @Override
                     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
@@ -159,13 +165,14 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
 
             return true;
         });
-        holder.itemView.setOnClickListener(v -> {
-            if (multiSelect) {
 
+        holder.itemView.setOnClickListener(v -> {
+
+            // If multiSelect mode is enabled, we'll keep on selecting the items
+            // else we open that folder
+            if (multiSelect) {
                 clickItem(holder);
             } else {
-
-
                 Intent intent = new Intent(activity, ImageActivity.class);
                 intent.putExtra("title", holder.textView.getText());
                 activity.startActivity(intent);
@@ -174,13 +181,18 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
 
         if (isSelectAll) {
             showHighlight(holder);
-
         } else {
             hideHighlight(holder);
         }
 
     }
 
+    /**
+     * Check if all item are selected or not
+     * and handles the Select All button accordingly
+     *
+     * @param holder referring to current ViewHolder
+     */
     private void selectAll(ViewHolder holder) {
         if (selectedListItems.size() == mFolderNames.size()) {
             isSelectAll = false;
@@ -198,29 +210,41 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         notifyDataSetChanged();
     }
 
-    //  Show/Hide Highlight on background of items on long click and selection
+    /**
+     * Show Highlight on background of items on long click and selection
+     */
     private void showHighlight(ViewHolder holder) {
         holder.checkedItem.setVisibility(View.VISIBLE);
         holder.itemView.setBackgroundColor(Color.parseColor("#394456"));
     }
 
+    /**
+     * Hide Highlight on background of items on long click and selection
+     */
     private void hideHighlight(ViewHolder holder) {
         holder.checkedItem.setVisibility(View.GONE);
         holder.itemView.setBackgroundColor(Color.parseColor("#121212"));
     }
 
+    /**
+     * Deletes the selected folders
+     *
+     * @param holder current ViewHolder
+     * @param mode   current Action mode
+     */
     private void deleteDirectory(ViewHolder holder, ActionMode mode) {
-//        Items to be deleted is now in tempDelete
+        // Items to be deleted is now in tempDelete
         List<FolderModel> tempDelete = new ArrayList<>(selectedListItems);
 
         CustomAlertDialogue alertDialogue = new CustomAlertDialogue(activity);
         AlertDialog alertToShow = alertDialogue.getDeleteAlert();
         alertToShow.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+
             alertToShow.dismiss();
             selectedListItems.clear();
             selectedListItems.addAll(tempDelete);
-            for (FolderModel s : selectedListItems) {
 
+            for (FolderModel s : selectedListItems) {
                 File folder = new File(folderParentPath.getPath() + "/" + s.getFolderName());
                 if (folder.exists()) {
                     String[] files = folder.list();
@@ -248,7 +272,6 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
                 noDataTextView.setVisibility(View.VISIBLE);
             }
             //collapsing the searchBar after delete
-//            MainActivity.folderSearchView.onActionViewCollapsed();
             mode.finish();
         });
         alertToShow.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
@@ -257,7 +280,11 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         });
     }
 
-    //    Behavior of items on click ( Highlighted/Not Highlighted and adding/removing from selectedListItems )
+    /**
+     * Behavior of items on click ( Highlighted/Not Highlighted and adding/removing from selectedListItems )
+     *
+     * @param holder current ViewHolder
+     */
     private void clickItem(ViewHolder holder) {
         FolderModel selected = mFolderNames.get(holder.getAdapterPosition());
         if (holder.checkedItem.getVisibility() == View.GONE) {
@@ -271,7 +298,9 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         mainViewModel.setText(String.valueOf(selectedListItems.size()));
     }
 
-    //    Checks item in selectList ( for disabling/enabling the delete and rename buttons)
+    /**
+     * Checks item in selectList ( for disabling/enabling the delete and rename buttons)
+     */
     private void checkSelectList() {
         if (selectedListItems.size() != 1) {
             menuBar.findItem(R.id.rename_folder).setEnabled(false);
@@ -336,6 +365,11 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         }
     };
 
+    /**
+     * Renames the folder
+     *
+     * @param mode current Action mode
+     */
     private void renameFolder(ActionMode mode) {
         CustomAlertDialogue alertDialogue = new CustomAlertDialogue(activity);
         AlertDialog alertToShow = alertDialogue.getFolderRenameAlert(selectedListItems);

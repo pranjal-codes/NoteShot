@@ -2,7 +2,6 @@ package com.example.noteshot;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -13,10 +12,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.Filter;
-import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,20 +26,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> implements Filterable {
+public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> {
 
 
     List<ImageModel> mImageList;
     List<ImageModel> wholeSearchList;
-    List<ImageModel> currentSearchListItems;
     List<ImageModel> selectedListItems;
     Activity activity;
     TextView noDataFoundTextView;
@@ -60,7 +49,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         this.folderParentPath = folderParentPath;
         mImageList = imageNameList;
         wholeSearchList = new ArrayList<>(imageNameList);
-        currentSearchListItems = imageNameList;
         selectedListItems = new ArrayList<>();
     }
 
@@ -97,11 +85,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         ImageView imageView = holder.imageView;
         imageData.setText(imageModel.getImageDatetime());
         imageName.setText(imageModel.getImageName());
-        Glide
-                .with(activity)
-                .load("file://" + imageModel.getImageUri())
-                .circleCrop()
-                .into(imageView);
+        Glide.with(activity).load("file://" + imageModel.getImageUri()).circleCrop().into(imageView);
         ImageView checkedItem = holder.checked;
         checkedItem.setImageResource(R.drawable.ic_check);
 
@@ -110,12 +94,10 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
                 ImageActivity.fab.hide();
                 ActionMode.Callback callback = new ActionMode.Callback() {
 
-
                     @Override
                     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                         MenuInflater menuInflater = mode.getMenuInflater();
-                        menuInflater.inflate(R.menu.menu_context, menu);
-                        ImageActivity.imageSearchView.clearFocus();
+                        menuInflater.inflate(R.menu.image_menu_context, menu);
                         menuBar = menu;
                         return true;
                     }
@@ -124,8 +106,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
                     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
                         multiSelect = true;
                         clickItem(holder);
-                        mainViewModel.getText().observe((LifecycleOwner) activity,
-                                s -> mode.setTitle(String.format("%s Selected", s)));
+                        mainViewModel.getText().observe((LifecycleOwner) activity, s -> mode.setTitle(String.format("%s Selected", s)));
                         return true;
                     }
 
@@ -133,19 +114,18 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
                     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
                         int id = item.getItemId();
                         switch (id) {
-                            case (int) R.id.delete_folder:
+
+                            case (int) R.id.delete_image:
                                 deleteImages(holder, mode);
                                 break;
 
-                            case (int) R.id.select_all:
+                            case (int) R.id.select_all_image:
                                 selectAll(holder);
                                 break;
 
-                            case (int) R.id.rename_folder:
-                                Toast.makeText(activity, "WILL IMPLEMENT SOON", Toast.LENGTH_SHORT).show();
-//                                renameImages(mode);
+                            case (int) R.id.share_image:
+                                shareSelectedImages();
                                 break;
-
                         }
                         if (mImageList.size() == 0) {
                             noDataFoundTextView.setVisibility(View.VISIBLE);
@@ -163,7 +143,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
                         selectedListItems.clear();
                         ImageActivity.fab.show();
                         notifyDataSetChanged();
-                        ImageActivity.imageSearchView.onActionViewCollapsed();
                     }
                 };
                 ((AppCompatActivity) v.getContext()).startActionMode(callback);
@@ -193,6 +172,32 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
 
     }
 
+    /**
+     * Broadcast to share selected images through intent
+     */
+    private void shareSelectedImages() {
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_SEND_MULTIPLE);
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Here are some files.");
+        intent.setType("image/jpeg"); /* This example is sharing jpeg images. */
+        ArrayList<Uri> files = new ArrayList<>();
+
+        for (ImageModel path : selectedListItems /* List of the files you want to send */) {
+            File file = new File(path.getImageUri());
+            Uri uri = Uri.fromFile(file);
+            files.add(uri);
+        }
+
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, files);
+        activity.startActivity(intent);
+
+    }
+
+    /**
+     * Select/Deselect all the images
+     *
+     * @param holder current holder
+     */
     private void selectAll(ViewHolder holder) {
         if (selectedListItems.size() == mImageList.size()) {
             isSelectAll = false;
@@ -210,17 +215,32 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         notifyDataSetChanged();
     }
 
-    //  Show/Hide Highlight on background of items on long click and selection
+    /**
+     * Show Highlight on background of items on long click and selection
+     *
+     * @param holder current holder
+     */
     private void showHighlight(ViewHolder holder) {
         holder.checked.setVisibility(View.VISIBLE);
         holder.itemView.setBackgroundColor(Color.parseColor("#394456"));
     }
 
+    /**
+     * Hide Highlight on background of items on long click and selection
+     *
+     * @param holder current holder
+     */
     private void hideHighlight(ViewHolder holder) {
         holder.checked.setVisibility(View.GONE);
         holder.itemView.setBackgroundColor(Color.parseColor("#121212"));
     }
 
+    /**
+     * Deletes the selected images
+     *
+     * @param holder current ViewHolder
+     * @param mode   current Action mode
+     */
     private void deleteImages(ViewHolder holder, ActionMode mode) {
 //        Items to be deleted is now in tempDelete
         List<ImageModel> tempDelete = new ArrayList<>(selectedListItems);
@@ -244,16 +264,12 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
             selectedListItems.clear();
             mImageList.clear();
             mImageList.addAll(wholeSearchList);
-            currentSearchListItems.clear();
-            currentSearchListItems.addAll(wholeSearchList);
             notifyDataSetChanged();
 
             hideHighlight(holder);
             if (mImageList.size() == 0) {
                 noDataFoundTextView.setVisibility(View.VISIBLE);
             }
-            //collapsing the searchBar after delete
-//            ImageAcitvity.imageSearchView.onActionViewCollapsed();
             mode.finish();
         });
         alertToShow.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
@@ -262,7 +278,11 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         });
     }
 
-    //    Behavior of items on click ( Highlighted/Not Highlighted and adding/removing from selectedListItems )
+    /**
+     * Behavior of items on click ( Highlighted/Not Highlighted and adding/removing from selectedListItems )
+     *
+     * @param holder current ViewHolder
+     */
     private void clickItem(ViewHolder holder) {
         ImageModel selected = mImageList.get(holder.getAdapterPosition());
         if (holder.checked.getVisibility() == View.GONE) {
@@ -276,25 +296,23 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         mainViewModel.setText(String.valueOf(selectedListItems.size()));
     }
 
-    //    Checks item in selectList ( for disabling/enabling the delete and rename buttons)
+    /**
+     * Checks item in selectList ( for disabling/enabling the delete and rename buttons)
+     */
     private void checkSelectList() {
-        if (selectedListItems.size() != 1) {
-            menuBar.findItem(R.id.rename_folder).setEnabled(false);
-            menuBar.findItem(R.id.rename_folder).setIcon(R.drawable.faded_create);
-        } else {
-            menuBar.findItem(R.id.rename_folder).setEnabled(true);
-            menuBar.findItem(R.id.rename_folder).setIcon(R.drawable.ic_baseline_create_24);
-        }
 
         if (selectedListItems.size() == 0) {
-            menuBar.findItem(R.id.delete_folder).setEnabled(false);
-            menuBar.findItem(R.id.delete_folder).setIcon(R.drawable.faded_delete);
+            menuBar.findItem(R.id.share_image).setEnabled(false);
+            menuBar.findItem(R.id.share_image).setIcon(R.drawable.faded_share);
+            menuBar.findItem(R.id.delete_image).setEnabled(false);
+            menuBar.findItem(R.id.delete_image).setIcon(R.drawable.faded_delete);
         } else {
-            menuBar.findItem(R.id.delete_folder).setEnabled(true);
-            menuBar.findItem(R.id.delete_folder).setIcon(R.drawable.ic_baseline_delete_24);
+            menuBar.findItem(R.id.share_image).setEnabled(true);
+            menuBar.findItem(R.id.share_image).setIcon(R.drawable.ic_baseline_share_24);
+            menuBar.findItem(R.id.delete_image).setEnabled(true);
+            menuBar.findItem(R.id.delete_image).setIcon(R.drawable.ic_baseline_delete_24);
         }
-        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(ImageActivity.imageSearchView.getWindowToken(), 0);
+
     }
 
     @Override
@@ -304,90 +322,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         } else
             noDataFoundTextView.setVisibility(View.GONE);
         return mImageList.size();
-    }
-
-    @Override
-    public Filter getFilter() {
-        return (Filter) filter;
-    }
-
-    private final Filter filter = new Filter() {
-        @Override
-        protected FilterResults performFiltering(CharSequence constraint) {
-            List<ImageModel> filteredSearchList = new ArrayList<>();
-
-            if (constraint == null || constraint.length() == 0) {
-                filteredSearchList.addAll(wholeSearchList);
-            } else {
-                String filterPattern = constraint.toString().toLowerCase().trim();
-
-                for (ImageModel image :
-                        wholeSearchList) {
-                    if (image.getImageName().toLowerCase().contains(filterPattern)) {
-                        filteredSearchList.add(image);
-                    }
-                }
-            }
-            FilterResults results = new FilterResults();
-            results.values = filteredSearchList;
-            return results;
-        }
-
-        @Override
-        protected void publishResults(CharSequence constraint, FilterResults results) {
-            currentSearchListItems.clear();
-            currentSearchListItems.addAll((List) results.values);
-            notifyDataSetChanged();
-        }
-    };
-
-    private void renameImages(ActionMode mode) {
-        CustomAlertDialogue alertDialogue = new CustomAlertDialogue(activity);
-        AlertDialog alertToShow = alertDialogue.getImageRenameAlert(selectedListItems);
-        EditText input = alertDialogue.getAlertEditText();
-
-        alertToShow.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String value = input.getText().toString();
-            ImageModel toDelete = selectedListItems.get(0);
-            String prevImageName = selectedListItems.get(0).getImageName();
-            File prevImage = new File(activity.getExternalFilesDir(null), prevImageName);
-            File renamedImage = new File(activity.getExternalFilesDir(null), value);
-            if (value.length() == 0) {
-                Toast.makeText(activity, "Image name cannot be empty", Toast.LENGTH_SHORT).show();
-            } else if (renamedImage.exists()) {
-                Toast.makeText(activity, "Image with that name already exists", Toast.LENGTH_SHORT).show();
-            } else {
-                prevImage.renameTo(renamedImage);
-                wholeSearchList.remove(toDelete);
-
-
-                DateFormat formatter = new SimpleDateFormat("ddMMyyyyHHmmss");
-                // you can change format of date
-                String name = renamedImage.getName();
-                String timeString = name.replaceAll("[^0-9]", "");
-                Date date = null;
-                try {
-                    date = formatter.parse(timeString);
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-                Timestamp timeStampDate = new Timestamp(date.getTime());
-                wholeSearchList.add(new ImageModel(renamedImage.getPath(), timeStampDate));
-
-                currentSearchListItems.clear();
-                currentSearchListItems.addAll(wholeSearchList);
-                mImageList.clear();
-                mImageList.addAll(wholeSearchList);
-                notifyDataSetChanged();
-                alertToShow.dismiss();
-                mode.finish();
-            }
-        });
-        alertToShow.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
-            mode.finish();
-            alertToShow.dismiss();
-        });
-
     }
 
 

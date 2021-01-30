@@ -5,20 +5,20 @@
     <item
         android:id="@+id/delete_image"
         android:icon="@drawable/ic_baseline_delete_24"
-        app:showAsAction="ifRoom"
-        android:title="Delete" />
+        android:title="Delete"
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/select_all_image"
         android:icon="@drawable/ic_baseline_select_all_24"
-        app:showAsAction="ifRoom"
-        android:title="Select All" />
+        android:title="Select All"
+        app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/rename_image"
-        android:icon="@drawable/ic_baseline_create_24"
-        app:showAsAction="ifRoom"
-        android:title="Rename" />
+        android:id="@+id/share_image"
+        android:icon="@drawable/ic_baseline_share_24"
+        android:title="Share images"
+        app:showAsAction="ifRoom" />
 
 
 </menu>

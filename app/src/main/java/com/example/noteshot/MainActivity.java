@@ -32,8 +32,9 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    //Data fields
     TextView noDataTextView;
-    List<FolderModel> folderName;
+    List<FolderModel> folderNameList;
     RecyclerView folderRecyclerView;
     FolderAdapter folderRecyclerViewAdapter;
     GridLayoutManager gridLayoutManager;
@@ -43,44 +44,53 @@ public class MainActivity extends AppCompatActivity {
     boolean isSortByName = false;
     static SearchView folderSearchView;
 
-
+    /**
+     * First method that gets called when the app is launched. All instantiations and inflation here.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//        Initializations for views and buttons
+
         noDataTextView = findViewById(R.id.empty_recyclerView_message);
         fab = findViewById(R.id.fab);
         folderRecyclerView = findViewById(R.id.folder_recyclerview);
         folderParentPath = this.getExternalFilesDir(null);
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
+        setSupportActionBar(toolbar);
         fetchExistingData();
         setRecyclerView();
 
-//        Create Folder Dialog Appears by Clicking the Fab Button
         fab.setOnClickListener(view -> {
             createFolder();
             gridLayoutManager.scrollToPositionWithOffset(0, 0);
         });
 
         hideFabOnScroll();
-
     }
 
-
+    /**
+     * Setting up the recycler View
+     */
     public void setRecyclerView() {
-        folderRecyclerViewAdapter = new FolderAdapter(MainActivity.this, folderName, noDataTextView, folderParentPath);
+        folderRecyclerViewAdapter = new FolderAdapter(MainActivity.this, folderNameList, noDataTextView, folderParentPath);
         folderRecyclerView.setAdapter(folderRecyclerViewAdapter);
 
+        // Getting the suitable number
+        // of columns for the grid layout
         int columns = getColumns();
         gridLayoutManager = new GridLayoutManager(MainActivity.this, columns + 1, RecyclerView.VERTICAL, false);
         folderRecyclerView.setLayoutManager(gridLayoutManager);
     }
 
+    /**
+     * Calculates the suitable number of columns
+     * for the grid layout
+     *
+     * @return number of columns
+     */
     public int getColumns() {
-//        It finds the appropriate no. of columns for the recycler View
         Display display = MainActivity.this.getWindowManager().getDefaultDisplay();
         DisplayMetrics outMetrics = new DisplayMetrics();
         display.getMetrics(outMetrics);
@@ -89,20 +99,29 @@ public class MainActivity extends AppCompatActivity {
         return Math.round(dpWidth / 300);
     }
 
+    /**
+     * Loads the activity on start with stored folders
+     */
     public void fetchExistingData() {
 
-        folderName = new ArrayList<>();
+        // Fetches existing folders in the current directory
+        // and adding them to the folderName List
+        folderNameList = new ArrayList<>();
         files = folderParentPath.listFiles();
         if (files != null) {
             for (File inFile : files) {
                 if (inFile.isDirectory()) {
-                    folderName.add(new FolderModel(inFile.getName(), inFile.lastModified()));
+                    folderNameList.add(new FolderModel(inFile.getName(), inFile.lastModified()));
                 }
             }
         }
-        Collections.sort(folderName, (o1, o2) -> o1.getFolderName().compareToIgnoreCase(o2.getFolderName()));
+        Collections.sort(folderNameList, (o1, o2) -> o1.getFolderName().compareToIgnoreCase(o2.getFolderName()));
     }
 
+    /**
+     * Hides the Floating Action Button on
+     * scroll for better visibility
+     */
     private void hideFabOnScroll() {
         folderRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -117,29 +136,36 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
+    /**
+     * Creates a new folder
+     */
     private void createFolder() {
-
-//        My custom alert Dialog , nothing to worry about this
+        // Custom Dialog box for the action
         CustomAlertDialogue alertDialogue = new CustomAlertDialogue(this);
         AlertDialog alertToShow = alertDialogue.getFolderCreateAlert();
         EditText input = alertDialogue.getAlertEditText();
 
         alertToShow.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
 
-//            Getting the name of the folder to be created
+            // Getting the folder's name
             String value = input.getText().toString();
+
+            //Checks for illegal text input
             if (value.contains("\\") || value.contains(":") || value.contains("*") || value.contains("\"") ||
                     value.contains("<") || value.contains(">") || value.contains("|") || value.contains("/") || value.contains("?")) {
 
                 Toast.makeText(MainActivity.this, "File name contains illegal characters.\n(\\:*?\"<>|/)", Toast.LENGTH_SHORT).show();
 
             } else {
+
+                //Creating a new folder
                 File dir = new File(MainActivity.this.getExternalFilesDir(null), value.trim());
+
+                // Check if the folder exists
                 if (!dir.exists()) {
                     if (dir.mkdir()) {
                         alertToShow.dismiss();
-                        folderName.add(new FolderModel(dir.getName(), dir.lastModified()));
+                        folderNameList.add(new FolderModel(dir.getName(), dir.lastModified()));
                         if (isSortByName) {
                             sortByName();
                         } else {
@@ -148,9 +174,10 @@ public class MainActivity extends AppCompatActivity {
                         folderRecyclerViewAdapter.notifyDataSetChanged();
                         setRecyclerView();
                         Toast.makeText(MainActivity.this, "New Folder Created", Toast.LENGTH_SHORT).show();
-                        Log.i("PATH", dir.getPath());
                     }
                 } else {
+
+                    // Handling edges cases
                     if (value.length() == 0) {
                         Toast.makeText(MainActivity.this, "Folder name cannot be empty", Toast.LENGTH_SHORT).show();
                     } else {
@@ -161,15 +188,24 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Inflate the AppBar menu
+     *
+     * @param menu object
+     * @return boolean value indicating success
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-//         Inflate the menu; this adds items to the action bar if it is present.
+
+        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         MenuItem menuItem = menu.findItem(R.id.search_folders);
         folderSearchView = (SearchView) menuItem.getActionView();
         folderSearchView.setMaxWidth(Integer.MAX_VALUE);
         folderSearchView.setQueryHint("Search Folders");
         folderSearchView.setImeOptions(EditorInfo.IME_ACTION_DONE);
+
+
         folderSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 
             @Override
@@ -201,6 +237,12 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * Handles AppBar menu option clicks
+     *
+     * @param item the clicked menu entry
+     * @return status indicating success
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -219,17 +261,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sortByLastModified() {
-        Collections.sort(folderName, (o1, o2) -> o2.getTimestamp().compareToIgnoreCase(o1.getTimestamp()));
+        Collections.sort(folderNameList, (o1, o2) -> o2.getTimestamp().compareToIgnoreCase(o1.getTimestamp()));
         gridLayoutManager.scrollToPositionWithOffset(0, 0);
         isSortByName = false;
     }
 
     private void sortByName() {
-        Collections.sort(folderName, (o1, o2) -> o1.getFolderName().compareToIgnoreCase(o2.getFolderName()));
+        Collections.sort(folderNameList, (o1, o2) -> o1.getFolderName().compareToIgnoreCase(o2.getFolderName()));
         gridLayoutManager.scrollToPositionWithOffset(0, 0);
         isSortByName = true;
     }
 
+    /**
+     * On back press, checks if search bar is open,
+     * if yes, closes it
+     */
     @Override
     public void onBackPressed() {
         if (!folderSearchView.isIconified()) {

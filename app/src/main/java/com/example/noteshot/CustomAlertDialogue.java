@@ -19,6 +19,11 @@ public class CustomAlertDialogue {
     }
 
 
+    /**
+     * Creates a New Folder AlertDialog
+     *
+     * @return AlertDialog
+     */
     public AlertDialog getFolderCreateAlert() {
         AlertDialog.Builder alert = new AlertDialog.Builder(context);
         alert.setTitle("New Folder");
@@ -44,10 +49,18 @@ public class CustomAlertDialogue {
         return alertToShow;
     }
 
+    /**
+     * @return editText
+     */
     public EditText getAlertEditText() {
         return alertEditText;
     }
 
+    /**
+     * Creates a Delete AlertDialog
+     *
+     * @return AlertDialog
+     */
     public AlertDialog getDeleteAlert() {
         AlertDialog.Builder alert = new AlertDialog.Builder(context);
         alert.setTitle("Delete");
@@ -60,6 +73,11 @@ public class CustomAlertDialogue {
         return alertToShow;
     }
 
+    /**
+     * Creates a Rename AlertDialog
+     *
+     * @return AlertDialog
+     */
     public AlertDialog getFolderRenameAlert(List<FolderModel> selectedListItems) {
         AlertDialog.Builder alert = new AlertDialog.Builder(context);
         alert.setTitle("Rename");
@@ -86,29 +104,4 @@ public class CustomAlertDialogue {
         return alertToShow;
     }
 
-    public AlertDialog getImageRenameAlert(List<ImageModel> selectedListItems) {
-        AlertDialog.Builder alert = new AlertDialog.Builder(context);
-        alert.setTitle("Rename");
-        final EditText input = new EditText(context);
-        FrameLayout container = new FrameLayout(context);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.setMargins(16, 16, 16, 16);
-        input.setHighlightColor(Color.parseColor("#09a9ee"));
-        input.setSingleLine();
-        input.setLayoutParams(params);
-        String previousFolderName = selectedListItems.get(0).getImageName();
-        input.setText(previousFolderName);
-        input.selectAll();
-        input.requestFocus();
-        alertEditText = input;
-        container.addView(input);
-        alert.setView(container).setPositiveButton("OK", null).setNegativeButton("CANCEL", null);
-        AlertDialog alertToShow = alert.create();
-        alertToShow.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-        alertToShow.show();
-        alertToShow.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#03DAC6"));
-        alertToShow.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#03DAC6"));
-        alertToShow.setCanceledOnTouchOutside(false);
-        return alertToShow;
-    }
 }
